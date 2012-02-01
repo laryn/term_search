@@ -1,0 +1,8 @@
+name = Term Search
+description = Search taxonomy terms as rendered by drupal (with fields).
+package = Search
+core = 7.x
+dependencies[] = taxonomy
+dependencies[] = search
+dependencies[] = field
+files[] = term_search.module
