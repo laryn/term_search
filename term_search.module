@@ -151,7 +151,7 @@ function term_search_search_status() {
   foreach ($vocabularies as $vid => $check) {
     if (!$check) {
       unset($vocabularies[$vid]);
-	}
+    }
   }
   $vids = '(' . implode(',', $vocabularies) . ')';
   if (!empty($vocabularies)) {
@@ -173,7 +173,7 @@ function term_search_search_status() {
 function term_search_taxonomy_term_update($term) {
   db_update('search_dataset')
     ->condition('sid', $term->tid)
-	->condition('type', 'term')
-	->fields(array('reindex' => 1))
-	->execute(); 
+    ->condition('type', 'term')
+    ->fields(array('reindex' => 1))
+    ->execute(); 
 }
