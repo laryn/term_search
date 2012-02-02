@@ -6,7 +6,6 @@ function term_search_search_info() {
   return array(
     'title' => 'Terms', 
     'path' => 'term', 
-    //'conditions_callback' => 'sample_search_conditions_callback',
   );
 }
 
@@ -30,8 +29,8 @@ function term_search_search_admin() {
   
   $form['term_search_fieldset'] = array(
     '#type' => 'fieldset',
-    '#title' => 'Indexed Vocabularies',
-    '#description' => '<em>Choose which vocabularies should be indexed for search.</em>',
+    '#title' => t('Indexed Vocabularies'),
+    '#description' => '<em>' . t('Choose which vocabularies should be indexed for search.') . '</em>',
   );
   
   $default = variable_get('term_search_indexed_vocabularies');
@@ -73,7 +72,6 @@ function term_search_update_index() {
       if($term = taxonomy_term_load($record->tid)){
         // Save the changed time of the most recent indexed term, for the search
         // results half-life calculation.
-        //variable_set('term_cron_last', $term->changed);
     
         // Render the node.
         $content = taxonomy_term_view($term);
@@ -102,7 +100,6 @@ function term_search_search_execute($keys = NULL, $conditions = NULL) {
   $query = db_select('search_index', 'i', array('target' => 'slave'))->extend('SearchQuery')->extend('PagerDefault');
   $query->join('taxonomy_term_data', 'te', 'te.tid = i.sid');
   $query
-    //->addTag('node_access')
     ->searchExpression($keys, 'term');
 
   // Insert special keywords.
@@ -111,14 +108,11 @@ function term_search_search_execute($keys = NULL, $conditions = NULL) {
   if ($query->setOption('term', 'ti.tid')) {
     $query->join('taxonomy_index', 'ti', 'n.nid = ti.nid');
   }
-  //*/
-
   
   // Only continue if the first pass  
   if (!$query->executeFirstPass()) {
     return array();
   }
-
 
   // Load results.
   $find = $query
@@ -126,10 +120,10 @@ function term_search_search_execute($keys = NULL, $conditions = NULL) {
     ->execute();
   $results = array();
   foreach ($find as $item) {
-    // Build the node body.
+    // Build the term body.
     $term = taxonomy_term_load($item->sid);
 	
-	  $content = taxonomy_term_view($term, 'search_result');
+	$content = taxonomy_term_view($term, 'search_result');
     $term->body = drupal_render($content);
 	
     $extra = module_invoke_all('term_search_result', $term);
@@ -178,8 +172,7 @@ function term_search_taxonomy_term_update($term){
     ->condition('sid', $term->tid)
 	->condition('type', 'term')
 	->fields(array('reindex' => 1))
-	->execute();
-	  
+	->execute(); 
 }
 
 
