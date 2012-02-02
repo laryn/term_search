@@ -175,5 +175,5 @@ function term_search_taxonomy_term_update($term) {
     ->condition('sid', $term->tid)
     ->condition('type', 'term')
     ->fields(array('reindex' => 1))
-    ->execute(); 
+    ->execute();
 }
