@@ -1,72 +1,71 @@
 <?php
-/*
+/**
  *  Implements hook_search_info()
  */
 function term_search_search_info() {
   return array(
-    'title' => 'Terms', 
-    'path' => 'term', 
+    'title' => 'Terms',
+    'path' => 'term',
   );
 }
 
-/*
+/**
  *  Implements hook_search_access
- */ 
-function taxonomy_search_search_access() {
+ */
+function term_search_search_access() {
   return user_access('access content');
 }
 
-/*
+/**
  *  Implements hook_search_admin
  */ 
 function term_search_search_admin() {
   $vocabularies = taxonomy_get_vocabularies();
-  
-  foreach($vocabularies as $vid => $vocabulary){
+
+  foreach($vocabularies as $vid => $vocabulary) {
     $v_options[$vid] = $vocabulary->name;
     $v_default[$vid] = $vid;
   }
-  
+
   $form['term_search_fieldset'] = array(
     '#type' => 'fieldset',
     '#title' => t('Indexed Vocabularies'),
     '#description' => '<em>' . t('Choose which vocabularies should be indexed for search.') . '</em>',
   );
-  
+
   $default = variable_get('term_search_indexed_vocabularies');
-  if(!$default)
+  if(!$default){
     $default = $v_default;
-  
+  }
+
   $form['term_search_fieldset']['term_search_indexed_vocabularies'] = array(
     '#type' => 'checkboxes',
     '#options' => $v_options,
     '#default_value' => $default,
   );
-  
+
   return $form;
 }
- 
-/*
+/**
  *  Implements hook_update_index()
  */
 function term_search_update_index() {
   $limit = (int) variable_get('search_cron_limit', 100);
   $vocabularies = variable_get('term_search_indexed_vocabularies');
 
-  foreach($vocabularies as $vid => $check){
-    if(!$check)
+  foreach($vocabularies as $vid => $check) {
+    if(!$check){
       unset($vocabularies[$vid]);
+	}	  
   }
   $vids = '(' . implode(',', $vocabularies) . ')';
 
-  if(!empty($vocabularies)){
-  $result = db_query_range("
-	SELECT t.tid 
-	FROM {taxonomy_term_data} t LEFT JOIN {search_dataset} d ON d.type = 'term' AND d.sid = t.tid 
-	WHERE (d.sid IS NULL OR d.reindex <> 0) AND t.vid IN " . $vids . " 
-	ORDER BY d.reindex ASC, t.tid ASC", 
-	0, $limit
-  );
+  if(!empty($vocabularies)) {
+    $result = db_query_range("
+	  SELECT t.tid 
+	  FROM {taxonomy_term_data} t LEFT JOIN {search_dataset} d ON d.type = 'term' AND d.sid = t.tid
+	  WHERE (d.sid IS NULL OR d.reindex <> 0) AND t.vid IN " . $vids . "
+	  ORDER BY d.reindex ASC, t.tid ASC", 0, $limit);
 
     foreach ($result as $record) {
       if($term = taxonomy_term_load($record->tid)){
