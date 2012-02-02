@@ -1,6 +1,6 @@
 <?php
 /**
- *  Implements hook_search_info()
+ * Implements hook_search_info()
  */
 function term_search_search_info() {
   return array(
@@ -10,19 +10,19 @@ function term_search_search_info() {
 }
 
 /**
- *  Implements hook_search_access
+ * Implements hook_search_access
  */
 function term_search_search_access() {
   return user_access('access content');
 }
 
 /**
- *  Implements hook_search_admin
- */ 
+ * Implements hook_search_admin
+ */
 function term_search_search_admin() {
   $vocabularies = taxonomy_get_vocabularies();
 
-  foreach($vocabularies as $vid => $vocabulary) {
+  foreach ($vocabularies as $vid => $vocabulary) {
     $v_options[$vid] = $vocabulary->name;
     $v_default[$vid] = $vid;
   }
@@ -34,7 +34,7 @@ function term_search_search_admin() {
   );
 
   $default = variable_get('term_search_indexed_vocabularies');
-  if(!$default){
+  if (!$default) {
     $default = $v_default;
   }
 
@@ -47,20 +47,20 @@ function term_search_search_admin() {
   return $form;
 }
 /**
- *  Implements hook_update_index()
+ * Implements hook_update_index()
  */
 function term_search_update_index() {
   $limit = (int) variable_get('search_cron_limit', 100);
   $vocabularies = variable_get('term_search_indexed_vocabularies');
 
-  foreach($vocabularies as $vid => $check) {
-    if(!$check){
+  foreach ($vocabularies as $vid => $check) {
+    if (!$check) {
       unset($vocabularies[$vid]);
-	}	  
+    }
   }
   $vids = '(' . implode(',', $vocabularies) . ')';
 
-  if(!empty($vocabularies)) {
+  if (!empty($vocabularies)) {
     $result = db_query_range("
 	  SELECT t.tid 
 	  FROM {taxonomy_term_data} t LEFT JOIN {search_dataset} d ON d.type = 'term' AND d.sid = t.tid
@@ -68,10 +68,7 @@ function term_search_update_index() {
 	  ORDER BY d.reindex ASC, t.tid ASC", 0, $limit);
 
     foreach ($result as $record) {
-      if($term = taxonomy_term_load($record->tid)){
-        // Save the changed time of the most recent indexed term, for the search
-        // results half-life calculation.
-    
+      if ($term = taxonomy_term_load($record->tid)) {
         // Render the node.
         $content = taxonomy_term_view($term);
         $term->rendered = drupal_render($content);
