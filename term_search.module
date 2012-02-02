@@ -1,5 +1,11 @@
 <?php
 /**
+ * @file
+ * Functions to index and search taxonomy terms.
+ *
+ */
+
+/**
  * Implements hook_search_info()
  */
 function term_search_search_info() {
