@@ -70,6 +70,7 @@ function term_search_update_index() {
     $query = db_select('taxonomy_term_data', 't');
 	$query->leftJoin('search_dataset', 'd', 'd.sid=t.tid');
 	$result = $query->condition('d.type', 'term')
+          ->fields('t', array('tid'))
 	  ->condition('t.vid', $vids, NULL)
 	  ->condition(db_or()->condition('d.sid', NULL)->condition('d.reindex', '<>'))
 	  ->orderBy('d.reindex', 'ASC')
