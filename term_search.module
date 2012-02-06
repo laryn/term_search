@@ -39,7 +39,7 @@ function term_search_search_admin() {
     '#description' => '<em>' . t('Choose which vocabularies should be indexed for search.') . '</em>',
   );
 
-  $default = variable_get('term_search_indexed_vocabularies');
+  $default = variable_get('term_search_indexed_vocabularies', array());
   if (!$default) {
     $default = $v_default;
   }
