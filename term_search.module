@@ -57,7 +57,7 @@ function term_search_search_admin() {
  */
 function term_search_update_index() {
   $limit = (int) variable_get('search_cron_limit', 100);
-  $vocabularies = variable_get('term_search_indexed_vocabularies');
+  $vocabularies = variable_get('term_search_indexed_vocabularies', array());
 
   foreach ($vocabularies as $vid => $check) {
     if (!$check) {
@@ -67,11 +67,22 @@ function term_search_update_index() {
   $vids = '(' . implode(',', $vocabularies) . ')';
 
   if (!empty($vocabularies)) {
-    $result = db_query_range("
+    $query = db_select('taxonomy_term_data', 't');
+	$query->leftJoin('search_dataset', 'd', 'd.sid=t.tid');
+	$result = $query->condition('d.type', 'term')
+	  ->condition('t.vid', $vids, NULL)
+	  ->condition(db_or->()condition('d.sid', NULL)->condition('d.reindex', '<>'))
+	  ->orderBy('d.reindex', 'ASC')
+	  ->orderBy('t.tid', 'ASC')
+	  ->range(0, $limit)
+	  ->execute()
+	  ->fetchAllAssoc('t.tid');
+	  /*
+	db_query_range("
 	  SELECT t.tid 
 	  FROM {taxonomy_term_data} t LEFT JOIN {search_dataset} d ON d.type = 'term' AND d.sid = t.tid
 	  WHERE (d.sid IS NULL OR d.reindex <> 0) AND t.vid IN " . $vids . "
-	  ORDER BY d.reindex ASC, t.tid ASC", 0, $limit);
+	  ORDER BY d.reindex ASC, t.tid ASC", 0, $limit);*/
 
     foreach ($result as $record) {
       if ($term = taxonomy_term_load($record->tid)) {
@@ -99,14 +110,13 @@ function term_search_update_index() {
  */
 function term_search_search_execute($keys = NULL, $conditions = NULL) {
   // Build matching conditions.
-  $query = db_select('search_index', 'i', array('target' => 'slave'))->extend('SearchQuery')->extend('PagerDefault');
+  $query = db_select('search_index', 'i', array('target' => 'slave'))
+    ->extend('SearchQuery')
+	->extend('PagerDefault');
   $query->join('taxonomy_term_data', 'te', 'te.tid = i.sid');
-  $query
-    ->searchExpression($keys, 'term');
+  $query->searchExpression($keys, 'term');
 
   // Insert special keywords.
-  // $query->setOption('type', 'n.type');
-  // $query->setOption('language', 'n.language');
   if ($query->setOption('term', 'ti.tid')) {
     $query->join('taxonomy_index', 'ti', 'n.nid = ti.nid');
   }
@@ -147,7 +157,8 @@ function term_search_search_execute($keys = NULL, $conditions = NULL) {
  * Implements hook_search_status().
  */
 function term_search_search_status() {
-  $vocabularies = variable_get('term_search_indexed_vocabularies');
+  $vocabularies = variable_get('term_search_indexed_vocabularies', array());
+  $remaining = $total = 0;
   foreach ($vocabularies as $vid => $check) {
     if (!$check) {
       unset($vocabularies[$vid]);
@@ -155,14 +166,29 @@ function term_search_search_status() {
   }
   $vids = '(' . implode(',', $vocabularies) . ')';
   if (!empty($vocabularies)) {
-    $total = db_query('SELECT COUNT(*) FROM {taxonomy_term_data} WHERE vid IN ' . $vids)->fetchField();
-    $remaining = db_query("
+    $total = db_select('taxonomy_term_data', 't')
+	  ->condition('t.vid', $vids, 'IN')
+	  ->countQuery()
+	  ->execute()
+	  ->fetchField();
+	$query = db_select('taxonomy_term_data', 't');
+	$query->leftJoin('search_dataset', 'd', 'd.sid=t.tid');
+    $remaining = $query->condition('d.type', 'term')
+	  ->condition('t.vid', $vids, 'IN')
+	  ->condition(db_or()->condition('d.sid', NULL)->condition('d.reindex', '0', '<>'))
+	  ->countQuery()
+	  ->execute()
+	  ->fetchField();
+	  /*
+	db_query("
       SELECT COUNT(*) 
       FROM {taxonomy_term_data} t LEFT JOIN {search_dataset} d 
       ON d.type = 'term' AND d.sid = t.tid 
       WHERE (d.sid IS NULL OR d.reindex <> 0) AND t.vid IN " . $vids)->fetchField();
-    return array('remaining' => $remaining, 'total' => $total);
+	  */
   }
+  
+  return array('remaining' => $remaining, 'total' => $total);
 }
 
 
