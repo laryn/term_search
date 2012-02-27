@@ -66,7 +66,7 @@ function term_search_update_index() {
     }
   }
 
-  if (!empty($vocabularies)) {
+  if (!empty($vids)) {
     $query = db_select('taxonomy_term_data', 't');
     $query->leftJoin('search_dataset', 'd', 'd.sid=t.tid AND d.type=\'term\'');
     $result = $query
@@ -160,7 +160,7 @@ function term_search_search_status() {
       $vids[] = $vid;
     }
   }
-  if (!empty($vocabularies)) {
+  if (!empty($vids)) {
     $total = db_select('taxonomy_term_data', 't')
       ->fields('t', array('tid'))
       ->condition('t.vid', $vids, 'IN')
