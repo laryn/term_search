@@ -189,6 +189,16 @@ function term_search_taxonomy_term_update($term) {
   db_update('search_dataset')
     ->condition('sid', $term->tid)
     ->condition('type', 'term')
-    ->fields(array('reindex' => 1))
+    ->fields(array('reindex' => REQUEST_TIME))
+    ->execute();
+}
+
+/**
+ * Implements hook_search_reset().
+ */
+function term_search_search_reset() {
+  db_update('search_dataset')
+    ->condition('type', 'term')
+    ->fields(array('reindex' => REQUEST_TIME))
     ->execute();
 }
