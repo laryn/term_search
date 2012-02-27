@@ -162,20 +162,20 @@ function term_search_search_status() {
   }
   if (!empty($vocabularies)) {
     $total = db_select('taxonomy_term_data', 't')
-    ->fields('t', array('tid'))
-    ->condition('t.vid', $vids, 'IN')
-    ->countQuery()
-    ->execute()
-    ->fetchField();
-  $query = db_select('taxonomy_term_data', 't');
-  $query->leftJoin('search_dataset', 'd', 'd.sid=t.tid AND d.type=\'term\'');
+      ->fields('t', array('tid'))
+      ->condition('t.vid', $vids, 'IN')
+      ->countQuery()
+      ->execute()
+      ->fetchField();
+    $query = db_select('taxonomy_term_data', 't');
+    $query->leftJoin('search_dataset', 'd', 'd.sid=t.tid AND d.type=\'term\'');
     $remaining = $query
-    ->fields('t', array('tid'))
-    ->condition('t.vid', $vocabularies, 'IN')
-    ->condition(db_or()->condition('d.sid', NULL)->condition('d.reindex', '0', '<>'))
-    ->countQuery()
-    ->execute()
-    ->fetchField();
+      ->fields('t', array('tid'))
+      ->condition('t.vid', $vocabularies, 'IN')
+      ->condition(db_or()->condition('d.sid', NULL)->condition('d.reindex', '0', '<>'))
+      ->countQuery()
+      ->execute()
+      ->fetchField();
   }
   return array('remaining' => $remaining, 'total' => $total);
 }
