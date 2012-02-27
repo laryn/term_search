@@ -68,9 +68,9 @@ function term_search_update_index() {
 
   if (!empty($vocabularies)) {
     $query = db_select('taxonomy_term_data', 't');
-	$query->leftJoin('search_dataset', 'd', 'd.sid=t.tid');
-	$result = $query->condition('d.type', 'term')
-          ->fields('t', array('tid'))
+	$query->leftJoin('search_dataset', 'd', 'd.sid=t.tid AND d.type=\'term\'');
+	$result = $query//->condition('d.type', 'term')
+       ->fields('t', array('tid'))
 	  ->condition('t.vid', $vids, NULL)
 	  ->condition(db_or()->condition('d.sid', NULL)->condition('d.reindex', '<>'))
 	  ->orderBy('d.reindex', 'ASC')
@@ -78,6 +78,7 @@ function term_search_update_index() {
 	  ->range(0, $limit)
 	  ->execute()
 	  ->fetchAllAssoc('t.tid');
+	  dsm($result);
 	  /*
 	db_query_range("
 	  SELECT t.tid 
@@ -167,18 +168,24 @@ function term_search_search_status() {
   }
   if (!empty($vocabularies)) {
     $total = db_select('taxonomy_term_data', 't')
+	  ->fields('t', array('tid'))
 	  ->condition('t.vid', $vocabularies, 'IN')
 	  ->countQuery()
 	  ->execute()
 	  ->fetchField();
-	$query = db_select('search_dataset', 'd')
-	  ->condition(db_or()->condition('d.sid', NULL)->condition('d.reindex', '0', '<>'));
-	$query->rightJoin('taxonomy_term_data', 't', 'd.sid=t.tid');
-    $remaining = $query->condition('d.type', 'term')
+	$query = db_select('taxonomy_term_data', 't');
+	$query->leftJoin('search_dataset', 'd', 'd.sid=t.tid AND d.type=\'term\'');
+    $remaining = $query
+	  ->fields('t', array('tid'))
 	  ->condition('t.vid', $vocabularies, 'IN')
-	  ->countQuery()
+	  ->condition(db_or()->condition('d.sid', NULL)->condition('d.reindex', '0', '<>'))
+	  ->fields('d', array('sid', 'reindex'))
+	  //->countQuery()
 	  ->execute()
-	  ->fetchField();
+	  ->fetchAllAssoc('t.tid');
+	  //->fetchField();
+	  dsm($total);
+	  dsm($remaining);
 	  /*
 	db_query("
       SELECT COUNT(*) 
@@ -187,7 +194,7 @@ function term_search_search_status() {
       WHERE (d.sid IS NULL OR d.reindex <> 0) AND t.vid IN " . $vids)->fetchField();
 	  */
   }
-  
+  $remaining = count($remaining);
   return array('remaining' => $remaining, 'total' => $total);
 }
 
