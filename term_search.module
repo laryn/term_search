@@ -56,7 +56,7 @@ function term_search_update_index() {
   $limit = (int) variable_get('search_cron_limit', 100);
   $vocabularies = variable_get('term_search_indexed_vocabularies', _term_search_default_vids());
 
-  // Find selected vocabularies and store the vids for the query.
+  // Pull out selected vids and store separately for the query.
   $vids = array();
   foreach ($vocabularies as $vid => $check) {
     if ($vid == $check) {
@@ -78,6 +78,7 @@ function term_search_update_index() {
       ->execute()
       ->fetchAllAssoc('tid');
 
+    // Index each term.
     foreach ($result as $record) {
       if ($term = taxonomy_term_load($record->tid)) {
         // Render the term.
@@ -137,10 +138,10 @@ function term_search_search_execute($keys = NULL, $conditions = NULL) {
   foreach ($find as $item) {
     // Build the term body.
     $term = taxonomy_term_load($item->sid);
-
     $content = taxonomy_term_view($term, 'search_result');
     $term->body = drupal_render($content);
 
+    // Allow other modules to provide additional information.
     $extra = module_invoke_all('term_search_result', $term);
 
     $results[] = array(
@@ -150,6 +151,7 @@ function term_search_search_execute($keys = NULL, $conditions = NULL) {
       'tid' => $term->tid,
       'term' => $term,
       'snippet' => search_excerpt($keys, $term->body),
+      'extra' => $extra,
     );
   }
   return $results;
@@ -160,8 +162,10 @@ function term_search_search_execute($keys = NULL, $conditions = NULL) {
  * Implements hook_search_status().
  */
 function term_search_search_status() {
-  $vocabularies = variable_get('term_search_indexed_vocabularies', _term_search_default_vids());
   $remaining = $total = 0;
+
+  // Get the indexed vocabularies
+  $vocabularies = variable_get('term_search_indexed_vocabularies', _term_search_default_vids());
   $vids = array();
   foreach ($vocabularies as $vid => $check) {
     if ($vid == $check) {
@@ -169,6 +173,7 @@ function term_search_search_status() {
     }
   }
   if (!empty($vids)) {
+    // Get the number of terms in all of the selected vocabularies.
     $total = db_select('taxonomy_term_data', 't')
       ->fields('t', array('tid'))
       ->condition('t.vid', $vids, 'IN')
@@ -177,6 +182,8 @@ function term_search_search_status() {
       ->fetchField();
     $query = db_select('taxonomy_term_data', 't');
     $query->leftJoin('search_dataset', 'd', 'd.sid=t.tid AND d.type=\'term\'');
+
+    // Get the number of terms left to be indexed.
     $remaining = $query
       ->fields('t', array('tid'))
       ->condition('t.vid', $vocabularies, 'IN')
@@ -203,6 +210,7 @@ function term_search_taxonomy_term_update($term) {
 
 /**
  * Implements hook_search_reset().
+ * Sets all terms to be reindexed
  */
 function term_search_search_reset() {
   db_update('search_dataset')
@@ -211,6 +219,10 @@ function term_search_search_reset() {
     ->execute();
 }
 
+/**
+ * Gets the default formatted list of vocabularies.
+ * All are selected by default.
+ */
 function _term_search_default_vids(){
   $default = array();
   $vocabularies = taxonomy_get_vocabularies();
