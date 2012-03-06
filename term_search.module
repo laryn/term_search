@@ -26,27 +26,24 @@ function term_search_search_access() {
  * Implements hook_search_admin().
  */
 function term_search_search_admin() {
-  $v_options = $default = array();
+  // Generate options array from available vocabularies.
+  $options = $default = array();
   $vocabularies = taxonomy_get_vocabularies();
   foreach ($vocabularies as $vid => $vocabulary) {
-    $v_options[$vid] = $vocabulary->name;
-    $v_default[$vid] = $vid;
+    $options[$vid] = $vocabulary->name;
   }
+
+  // If the user has never saved which vocabularies to index, get the default.
+  $default = variable_get('term_search_indexed_vocabularies', _term_seach_default_vids());
 
   $form['term_search_fieldset'] = array(
     '#type' => 'fieldset',
     '#title' => t('Indexed Vocabularies'),
     '#description' => '<em>' . t('Choose which vocabularies should be indexed for search.') . '</em>',
   );
-
-  $default = variable_get('term_search_indexed_vocabularies', array());
-  if (!$default) {
-    $default = $v_default;
-  }
-
   $form['term_search_fieldset']['term_search_indexed_vocabularies'] = array(
     '#type' => 'checkboxes',
-    '#options' => $v_options,
+    '#options' => $options,
     '#default_value' => $default,
   );
 
@@ -57,8 +54,9 @@ function term_search_search_admin() {
  */
 function term_search_update_index() {
   $limit = (int) variable_get('search_cron_limit', 100);
-  $vocabularies = variable_get('term_search_indexed_vocabularies', array());
+  $vocabularies = variable_get('term_search_indexed_vocabularies', _term_search_default_vids());
 
+  // Find selected vocabularies and store the vids for the query.
   $vids = array();
   foreach ($vocabularies as $vid => $check) {
     if ($vid == $check) {
@@ -85,7 +83,7 @@ function term_search_update_index() {
         $content = taxonomy_term_view($term);
         $term->rendered = drupal_render($content);
 
-        $text = '<h1>' . check_plain($term->name) . '</h1>' . $term->rendered;
+        $text = '<h3>' . check_plain($term->name) . '</h3>' . $term->rendered;
 
         // Fetch extra data normally not visible.
         $extra = module_invoke_all('term_update_index', $term);
@@ -152,7 +150,7 @@ function term_search_search_execute($keys = NULL, $conditions = NULL) {
  * Implements hook_search_status().
  */
 function term_search_search_status() {
-  $vocabularies = variable_get('term_search_indexed_vocabularies', array());
+  $vocabularies = variable_get('term_search_indexed_vocabularies', _term_search_default_vid());
   $remaining = $total = 0;
   $vids = array();
   foreach ($vocabularies as $vid => $check) {
@@ -201,4 +199,14 @@ function term_search_search_reset() {
     ->condition('type', 'term')
     ->fields(array('reindex' => REQUEST_TIME))
     ->execute();
+}
+
+function _term_search_default_vids(){
+  $default = array();
+  $vocabularies = taxonomy_get_vocabularies();
+  foreach ($vocabularies as $vid => $vocabulary) {
+    $default[$vid] = $vid;
+  }
+  variable_set('term_search_indexed_vocabularies', $default);
+  return $default;
 }
