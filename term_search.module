@@ -34,7 +34,7 @@ function term_search_search_admin() {
   }
 
   // If the user has never saved which vocabularies to index, get the default.
-  $default = variable_get('term_search_indexed_vocabularies', _term_seach_default_vids());
+  $default = variable_get('term_search_indexed_vocabularies', _term_search_default_vids());
 
   $form['term_search_fieldset'] = array(
     '#type' => 'fieldset',
@@ -70,7 +70,7 @@ function term_search_update_index() {
     $result = $query
       ->fields('t', array('tid'))
       ->condition('t.vid', $vids, 'IN')
-      ->condition(db_or()->condition('d.sid', NULL)->condition('d.reindex', '<>'))
+      ->condition(db_or()->condition('d.sid', NULL)->condition('d.reindex', 0, '<>'))
       ->orderBy('d.reindex', 'ASC')
       ->orderBy('t.tid', 'ASC')
       ->range(0, $limit)
@@ -150,7 +150,7 @@ function term_search_search_execute($keys = NULL, $conditions = NULL) {
  * Implements hook_search_status().
  */
 function term_search_search_status() {
-  $vocabularies = variable_get('term_search_indexed_vocabularies', _term_search_default_vid());
+  $vocabularies = variable_get('term_search_indexed_vocabularies', _term_search_default_vids());
   $remaining = $total = 0;
   $vids = array();
   foreach ($vocabularies as $vid => $check) {
@@ -207,6 +207,5 @@ function _term_search_default_vids(){
   foreach ($vocabularies as $vid => $vocabulary) {
     $default[$vid] = $vid;
   }
-  variable_set('term_search_indexed_vocabularies', $default);
   return $default;
 }
