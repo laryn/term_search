@@ -84,7 +84,7 @@ function term_search_update_index() {
         // Render the term.
         $content = taxonomy_term_view($term, 'search_index');
         $term->rendered = drupal_render($content);
-        $text = '<h1>' . check_plain($term->name) . '</h3>' . $term->rendered;
+        $text = '<h1>' . check_plain($term->name) . '</h1>' . $term->rendered;
 
         // Allow additional modules to include data.
         $extra = module_invoke_all('term_update_index', $term);
@@ -144,9 +144,10 @@ function term_search_search_execute($keys = NULL, $conditions = NULL) {
     // Allow other modules to provide additional information.
     $extra = module_invoke_all('term_search_result', $term);
 
+    $uri = entity_uri('taxonomy_term', $term);
     $results[] = array(
-      'link' => url('taxonomy/term/' . $item->sid, array('absolute' => TRUE)),
-      'type' => check_plain($term->vocabulary_machine_name),
+      'link' => url($uri['path'], array_merge($uri['options'], array('absolute' => TRUE))), 
+      'type' => $term->vocabulary_machine_name,
       'title' => $term->name,
       'tid' => $term->tid,
       'term' => $term,
