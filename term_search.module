@@ -205,7 +205,7 @@ function term_search_taxonomy_term_update($term) {
 }
 
 /**
- * Implements hook_search_reset().  
+ * Implements hook_search_reset().
  *
  * Sets all terms to be reindexed.
  */
@@ -217,7 +217,8 @@ function term_search_search_reset() {
 }
 
 /**
- * Gets the default formatted list of vocabularies.  All are selected by default.
+ * Gets the default formatted list of vocabularies.  All are selected by 
+ * default.
  */
 function _term_search_default_vids() {
   $default = array();
