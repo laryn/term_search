@@ -2,7 +2,6 @@
 /**
  * @file
  * Functions to for when the modules is installed or uninstalled.
- *
  */
 
 /**
@@ -17,3 +16,4 @@ function term_search_uninstall() {
     ->condition('type', 'term')
     ->execute();
 }
+

@@ -1,8 +1,9 @@
 <?php
 /**
  * @file
- * This file contains no working PHP code; it exists to provide additional documentation
- * for doxygen as well as to document hooks in the standard Drupal manner.
+ * This file contains no working PHP code; it exists to provide additional
+ * documentation for doxygen as well as to document hooks in the standard
+ * Drupal manner.
  */
 
 /**
@@ -10,11 +11,11 @@
  *
  * This module provides two hooks to customize the indexing and searching
  * of term entities from the core Taxonomy module:
- * 
+ *
  *   - hook_term_update_index
  *   - hook_term_search_result
  *
- * These are documented below.  In addition, anyone trying to theme or 
+ * These are documented below.  In addition, anyone trying to theme or
  * extend this module might find hook_taxonomy_term_view_alter or other
  * hooks from taxonomy.api.php useful.
  */
@@ -24,14 +25,14 @@
  *
  * Modules implementing this hook will return additional html text
  * to add to the search index for a specific term.  Note that
- * the term has already been rendered using the 'search_index' 
+ * the term has already been rendered using the 'search_index'
  * view mode.
  *
  * @param $term
  *   The term object that is being indexed for search.
  *
  * @return
- *   Text (can include html) that will be added to the rendered term
+ *   A string (can include html) that will be added to the rendered term
  *   before indexing for search.
  */
 function hook_term_update_index($term) {
@@ -61,7 +62,7 @@ function hook_term_update_index($term) {
  *   The term object being display in a search result.
  *
  * @return
- *   Text (can include html) that will be added to the rendered search
+ *   A string (can include html) that will be added to the rendered search
  *   result for this term.
  */
 function hook_term_search_result($term) {

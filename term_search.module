@@ -2,11 +2,10 @@
 /**
  * @file
  * Functions to index and search taxonomy terms.
- *
  */
 
 /**
- * Implements hook_sentity_info_alter()
+ * Implements hook_sentity_info_alter().
  */
 function term_search_entity_info_alter(&$entity_info) {
   $entity_info['taxonomy_term']['view modes']['search_index'] = array(
@@ -145,7 +144,7 @@ function term_search_search_execute($keys = NULL, $conditions = NULL) {
 
     $uri = entity_uri('taxonomy_term', $term);
     $results[] = array(
-      'link' => url($uri['path'], array_merge($uri['options'], array('absolute' => TRUE))), 
+      'link' => url($uri['path'], array_merge($uri['options'], array('absolute' => TRUE))),
       'type' => $term->vocabulary_machine_name,
       'title' => $term->name,
       'tid' => $term->tid,
@@ -193,8 +192,8 @@ function term_search_search_status() {
 
 
 /**
- * Implements hook_taxonomy_term_update().
- * Sets the term to be reindexed when the term is updated.
+ * Implements hook_taxonomy_term_update().  Sets the term to be 
+ * reindexed when the term is updated.
  */
 function term_search_taxonomy_term_update($term) {
   db_update('search_dataset')
@@ -205,8 +204,7 @@ function term_search_taxonomy_term_update($term) {
 }
 
 /**
- * Implements hook_search_reset().
- * Sets all terms to be reindexed
+ * Implements hook_search_reset().  Sets all terms to be reindexed.
  */
 function term_search_search_reset() {
   db_update('search_dataset')
@@ -216,8 +214,8 @@ function term_search_search_reset() {
 }
 
 /**
- * Gets the default formatted list of vocabularies.
- * All are selected by default.
+ * Gets the default formatted list of vocabularies.  All are selected 
+ * by default.
  */
 function _term_search_default_vids() {
   $default = array();
