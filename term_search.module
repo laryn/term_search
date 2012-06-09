@@ -6,6 +6,16 @@
  */
 
 /**
+ * Implements hook_sentity_info_alter()
+ */
+function term_search_entity_info_alter(&$entity_info) {
+  $entity_info['taxonomy_term']['view modes']['search_index'] = array(
+    'label' => 'Search Index',
+    'custom settings' => TRUE,
+  );
+}
+
+/**
  * Implements hook_search_info().
  */
 function term_search_search_info() {
@@ -30,7 +40,7 @@ function term_search_search_admin() {
   $options = $default = array();
   $vocabularies = taxonomy_get_vocabularies();
   foreach ($vocabularies as $vid => $vocabulary) {
-    $options[$vid] = $vocabulary->name;
+    $options[$vid] = check_plain($vocabulary->name);
   }
 
   // If the user has never saved which vocabularies to index, get the default.
@@ -57,12 +67,7 @@ function term_search_update_index() {
   $vocabularies = variable_get('term_search_indexed_vocabularies', _term_search_default_vids());
 
   // Pull out selected vids and store separately for the query.
-  $vids = array();
-  foreach ($vocabularies as $vid => $check) {
-    if ($vid == $check) {
-      $vids[] = $vid;
-    }
-  }
+  $vids = array_values(array_filter($vocabularies));
 
   if (!empty($vids)) {
     // Get terms waiting to be indexed.
@@ -117,13 +122,7 @@ function term_search_search_execute($keys = NULL, $conditions = NULL) {
 
   // Limit to selected vocabularies.
   $vocabularies = variable_get('term_search_indexed_vocabularies', _term_search_default_vids());
-  $vids = array();
-  foreach ($vocabularies as $vid => $check) {
-    if ($vid == $check) {
-      $vids[] = $vid;
-    }
-  }
-  $query->condition('te.vid', $vids, 'IN');
+  $query->condition('te.vid', array_values(array_filter($vocabularies)), 'IN');
 
   // Only continue if the first pass.
   if (!$query->executeFirstPass()) {
@@ -167,12 +166,8 @@ function term_search_search_status() {
 
   // Get the indexed vocabularies.
   $vocabularies = variable_get('term_search_indexed_vocabularies', _term_search_default_vids());
-  $vids = array();
-  foreach ($vocabularies as $vid => $check) {
-    if ($vid == $check) {
-      $vids[] = $vid;
-    }
-  }
+  $vids = array_values(array_filter($vocabularies));
+
   if (!empty($vids)) {
     // Get the number of terms in all of the selected vocabularies.
     $total = db_select('taxonomy_term_data', 't')
