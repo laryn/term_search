@@ -192,8 +192,9 @@ function term_search_search_status() {
 
 
 /**
- * Implements hook_taxonomy_term_update().  Sets the term to be 
- * reindexed when the term is updated.
+ * Implements hook_taxonomy_term_update().
+ *
+ * Sets the term to be reindexed when the term is updated.
  */
 function term_search_taxonomy_term_update($term) {
   db_update('search_dataset')
@@ -204,7 +205,9 @@ function term_search_taxonomy_term_update($term) {
 }
 
 /**
- * Implements hook_search_reset().  Sets all terms to be reindexed.
+ * Implements hook_search_reset().  
+ *
+ * Sets all terms to be reindexed.
  */
 function term_search_search_reset() {
   db_update('search_dataset')
@@ -214,8 +217,7 @@ function term_search_search_reset() {
 }
 
 /**
- * Gets the default formatted list of vocabularies.  All are selected 
- * by default.
+ * Gets the default formatted list of vocabularies.  All are selected by default.
  */
 function _term_search_default_vids() {
   $default = array();
