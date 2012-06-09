@@ -16,4 +16,3 @@ function term_search_uninstall() {
     ->condition('type', 'term')
     ->execute();
 }
-
