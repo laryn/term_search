@@ -61,7 +61,7 @@ function hook_term_update_index($term) {
  * @param $term
  *   The term object being display in a search result.
  *
- * @return 
+ * @return
  *   A string (can include html) that will be added to the rendered search
  *   result for this term.
  */

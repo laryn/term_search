@@ -217,7 +217,7 @@ function term_search_search_reset() {
 }
 
 /**
- * Gets the default formatted list of vocabularies.  All are selected by 
+ * Gets the default formatted list of vocabularies.  All are selected by
  * default.
  */
 function _term_search_default_vids() {
