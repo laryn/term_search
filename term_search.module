@@ -88,7 +88,7 @@ function term_search_update_index() {
         // Render the term.
         $content = taxonomy_term_view($term, 'search_index');
         $term->rendered = drupal_render($content);
-        $text = '<h1>' . check_plain($term->name) . '</h1>' . $term->rendered;
+        $text = '<h1>' . $term->name . '</h1>' . $term->rendered;
 
         // Allow additional modules to include data.
         $extra = module_invoke_all('term_update_index', $term);
