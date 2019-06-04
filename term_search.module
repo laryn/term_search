@@ -46,14 +46,16 @@ function term_search_config_info() {
  */
 function term_search_search_admin() {
   // Generate options array from available vocabularies.
-  $options = $default = array();
-  $vocabularies = taxonomy_get_vocabularies();
-  foreach ($vocabularies as $vid => $vocabulary) {
-    $options[$vid] = check_plain($vocabulary->name);
+  $config = config('search.settings');
+  $options = $default = $indexed_vocabularies = array();
+  $all_vocabularies = taxonomy_get_vocabularies();
+  foreach ($all_vocabularies as $vocabulary => $vocabulary_object) {
+    $options[$vocabulary] = check_plain($vocabulary_object->name);
+    $indexed = $config->get('term_search_indexed_vocabularies.' . $vocabulary);
+    if ($indexed === $vocabulary) {
+      $indexed_vocabularies[] = $vocabulary;
+    }
   }
-
-  // If the user has never saved which vocabularies to index, get the default.
-  $default = config_get('term_search.settings', 'term_search_indexed_vocabularies');
 
   $form['term_search_fieldset'] = array(
     '#type' => 'fieldset',
@@ -63,29 +65,41 @@ function term_search_search_admin() {
   $form['term_search_fieldset']['term_search_indexed_vocabularies'] = array(
     '#type' => 'checkboxes',
     '#options' => $options,
-    '#default_value' => $default,
+    '#default_value' => $indexed_vocabularies,
+  );
+
+  // Add a submit button
+  $form['actions']['#type'] = 'actions';
+  $form['actions']['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save configuration'),
   );
 
   return $form;
 }
+
 /**
  * Implements hook_update_index().
  */
 function term_search_update_index() {
-  $config = config('term_search.settings');
-  $limit = (int) config_get('search.settings', 'search_cron_limit');
-  $vocabularies = $config->get('term_search_indexed_vocabularies');
+  $config = config('search.settings');
+  $limit = (int) $config->get('search_cron_limit');
+  $vocabularies = array();
 
-  // Pull out selected vids and store separately for the query.
-  $vids = array_values(array_filter($vocabularies));
+  // Get the indexed vocabularies.
+  foreach (taxonomy_get_vocabularies() as $vocabulary => $vocabulary_object) {
+    if ($config->get('term_search_indexed_vocabularies.' . $vocabulary) == $vocabulary) {
+      $vocabularies[] = $vocabulary;
+    }
+  }
 
-  if (!empty($vids)) {
+  if (!empty($vocabularies)) {
     // Get terms waiting to be indexed.
     $query = db_select('taxonomy_term_data', 't');
     $query->leftJoin('search_dataset', 'd', 'd.sid=t.tid AND d.type=\'term\'');
     $result = $query
       ->fields('t', array('tid'))
-      ->condition('t.vid', $vids, 'IN')
+      ->condition('t.vocabulary', $vocabularies, 'IN')
       ->condition(db_or()->condition('d.sid', NULL)->condition('d.reindex', 0, '<>'))
       ->orderBy('d.reindex', 'ASC')
       ->orderBy('t.tid', 'ASC')
@@ -132,7 +146,7 @@ function term_search_search_execute($keys = NULL, $conditions = NULL) {
 
   // Limit to selected vocabularies.
   $vocabularies = config_get('term_search.settings', 'term_search_indexed_vocabularies');
-  $query->condition('te.vid', array_values(array_filter($vocabularies)), 'IN');
+  $query->condition('te.vocabulary', array_values(array_filter($vocabularies)), 'IN');
 
   // Only continue if the first pass.
   if (!$query->executeFirstPass()) {
@@ -156,7 +170,7 @@ function term_search_search_execute($keys = NULL, $conditions = NULL) {
     $uri = entity_uri('taxonomy_term', $term);
     $results[] = array(
       'link' => url($uri['path'], array_merge($uri['options'], array('absolute' => TRUE))),
-      'type' => $term->vocabulary_machine_name,
+      'type' => $term->vocabulary,
       'title' => $term->name,
       'tid' => $term->tid,
       'term' => $term,
@@ -173,16 +187,21 @@ function term_search_search_execute($keys = NULL, $conditions = NULL) {
  */
 function term_search_search_status() {
   $remaining = $total = 0;
+  $vocabularies = array();
 
   // Get the indexed vocabularies.
-  $vocabularies = config_get('term_search.settings', 'term_search_indexed_vocabularies');
-  $vids = array_values(array_filter($vocabularies));
+  $config = config('search.settings');
+  foreach (taxonomy_get_vocabularies() as $vocabulary => $vocabulary_object) {
+    if ($config->get('term_search_indexed_vocabularies.' . $vocabulary) == $vocabulary) {
+      $vocabularies[] = $vocabulary;
+    }
+  }
 
-  if (!empty($vids)) {
+  if (!empty($vocabularies)) {
     // Get the number of terms in all of the selected vocabularies.
     $total = db_select('taxonomy_term_data', 't')
       ->fields('t', array('tid'))
-      ->condition('t.vid', $vids, 'IN')
+      ->condition('t.vocabulary', $vocabularies, 'IN')
       ->countQuery()
       ->execute()
       ->fetchField();
@@ -192,7 +211,7 @@ function term_search_search_status() {
     // Get the number of terms left to be indexed.
     $remaining = $query
       ->fields('t', array('tid'))
-      ->condition('t.vid', $vocabularies, 'IN')
+      ->condition('t.vocabulary', $vocabularies, 'IN')
       ->condition(db_or()->condition('d.sid', NULL)->condition('d.reindex', '0', '<>'))
       ->countQuery()
       ->execute()
@@ -225,17 +244,4 @@ function term_search_search_reset() {
     ->condition('type', 'term')
     ->fields(array('reindex' => REQUEST_TIME))
     ->execute();
-}
-
-/**
- * Gets the default formatted list of vocabularies.  All are selected by
- * default.
- */
-function _term_search_default_vids() {
-  $default = array();
-  $vocabularies = taxonomy_get_vocabularies();
-  foreach ($vocabularies as $vid => $vocabulary) {
-    $default[$vid] = $vid;
-  }
-  return $default;
 }
