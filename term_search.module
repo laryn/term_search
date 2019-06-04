@@ -32,6 +32,16 @@ function term_search_search_access() {
 }
 
 /**
+ * Implements hook_config_info().
+ */
+function term_search_config_info() {
+  $prefixes['term_search.settings'] = array(
+    'label' => t('Module name settings'),
+    'group' => t('Configuration'),
+  );
+}
+
+/**
  * Implements hook_search_admin().
  */
 function term_search_search_admin() {
@@ -43,7 +53,7 @@ function term_search_search_admin() {
   }
 
   // If the user has never saved which vocabularies to index, get the default.
-  $default = variable_get('term_search_indexed_vocabularies', _term_search_default_vids());
+  $default = config_get('term_search.settings', 'term_search_indexed_vocabularies');
 
   $form['term_search_fieldset'] = array(
     '#type' => 'fieldset',
@@ -62,8 +72,9 @@ function term_search_search_admin() {
  * Implements hook_update_index().
  */
 function term_search_update_index() {
-  $limit = (int) variable_get('search_cron_limit', 100);
-  $vocabularies = variable_get('term_search_indexed_vocabularies', _term_search_default_vids());
+  $config = config('term_search.settings');
+  $limit = (int) config_get('search.settings', 'search_cron_limit');
+  $vocabularies = $config->get('term_search_indexed_vocabularies');
 
   // Pull out selected vids and store separately for the query.
   $vids = array_values(array_filter($vocabularies));
@@ -87,7 +98,7 @@ function term_search_update_index() {
       if ($term = taxonomy_term_load($record->tid)) {
         // Render the term.
         $content = taxonomy_term_view($term, 'search_index');
-        $term->rendered = drupal_render($content);
+        $term->rendered = backdrop_render($content);
         $text = '<h1>' . $term->name . '</h1>' . $term->rendered;
 
         // Allow additional modules to include data.
@@ -120,7 +131,7 @@ function term_search_search_execute($keys = NULL, $conditions = NULL) {
   }
 
   // Limit to selected vocabularies.
-  $vocabularies = variable_get('term_search_indexed_vocabularies', _term_search_default_vids());
+  $vocabularies = config_get('term_search.settings', 'term_search_indexed_vocabularies');
   $query->condition('te.vid', array_values(array_filter($vocabularies)), 'IN');
 
   // Only continue if the first pass.
@@ -137,7 +148,7 @@ function term_search_search_execute($keys = NULL, $conditions = NULL) {
     // Build the term body.
     $term = taxonomy_term_load($item->sid);
     $content = taxonomy_term_view($term, 'search_result');
-    $term->body = drupal_render($content);
+    $term->body = backdrop_render($content);
 
     // Allow other modules to provide additional information.
     $extra = module_invoke_all('term_search_result', $term);
@@ -164,7 +175,7 @@ function term_search_search_status() {
   $remaining = $total = 0;
 
   // Get the indexed vocabularies.
-  $vocabularies = variable_get('term_search_indexed_vocabularies', _term_search_default_vids());
+  $vocabularies = config_get('term_search.settings', 'term_search_indexed_vocabularies');
   $vids = array_values(array_filter($vocabularies));
 
   if (!empty($vids)) {

@@ -8,11 +8,28 @@
  * Implements hook_uninstall().
  */
 function term_search_uninstall() {
-  variable_del('term_search_indexed_vocabularies');
+  config_clear('term_search.settings', 'term_search_indexed_vocabularies');
   db_delete('search_dataset')
     ->condition('type', 'term')
     ->execute();
   db_delete('search_index')
     ->condition('type', 'term')
     ->execute();
+}
+
+/**
+ * Implements hook_update_N().
+ */
+function term_search_update_1000() {
+  $config = config('term_search.settings');
+  $config->set('term_search_indexed_vocabularies', update_variable_get('term_search_indexed_vocabularies', 'dynamic value in file /term_search/term_search.module line 167'));
+  update_variable_del('term_search_indexed_vocabularies');
+}
+
+/**
+ * Implements hook_install().
+ */
+function term_search_install() {
+  // Dynamically generated variable data was detected.
+  // /term_search/term_search.module line 167
 }
